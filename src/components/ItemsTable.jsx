@@ -1,0 +1,188 @@
+import React from 'react';
+import { Flex, Box, Heading, Tooltip } from 'monday-ui-react-core';
+import { getItemHighlight } from '../utils/highlightEngine';
+
+function ItemsTable({ items, columns, rules, isDarkMode }) {
+  // Get columns to display (limit to first 5 for readability)
+  const displayColumns = columns.slice(0, 5);
+
+  if (items.length === 0) {
+    return (
+      <Box padding={Box.paddings.LARGE}>
+        <div className="empty-state" style={{ backgroundColor: isDarkMode ? '#272a4a' : '#f6f7fb', borderRadius: 8 }}>
+          <Heading type={Heading.types.H3} value="No Items Found" />
+          <p style={{ marginTop: 8, color: isDarkMode ? '#c5c7d0' : '#676879' }}>
+            This board doesn't have any items yet.
+          </p>
+        </div>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <Heading type={Heading.types.H3} value="Board Preview" />
+      <p style={{ color: isDarkMode ? '#c5c7d0' : '#676879', fontSize: 14, marginBottom: 12 }}>
+        Preview how your highlighting rules will look. Showing {items.length} items.
+      </p>
+
+      <div className="items-table-container" style={{ overflowX: 'auto' }}>
+        <table className="items-table" style={{
+          width: '100%',
+          borderCollapse: 'collapse',
+          backgroundColor: isDarkMode ? '#272a4a' : '#ffffff',
+          borderRadius: 8,
+          overflow: 'hidden',
+        }}>
+          <thead>
+            <tr style={{
+              backgroundColor: isDarkMode ? '#1c1f3b' : '#f6f7fb',
+              borderBottom: `1px solid ${isDarkMode ? '#3d4066' : '#e6e9ef'}`,
+            }}>
+              <th style={{
+                padding: '12px 16px',
+                textAlign: 'left',
+                fontWeight: 600,
+                color: isDarkMode ? '#ffffff' : '#323338',
+              }}>
+                Item
+              </th>
+              {displayColumns.map(col => (
+                <th
+                  key={col.id}
+                  style={{
+                    padding: '12px 16px',
+                    textAlign: 'left',
+                    fontWeight: 600,
+                    color: isDarkMode ? '#ffffff' : '#323338',
+                  }}
+                >
+                  {col.title}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {items.map(item => {
+              const highlight = getItemHighlight(item, rules, columns, isDarkMode);
+
+              return (
+                <tr
+                  key={item.id}
+                  style={{
+                    backgroundColor: highlight?.color || 'transparent',
+                    borderBottom: `1px solid ${isDarkMode ? '#3d4066' : '#e6e9ef'}`,
+                    transition: 'background-color 0.2s ease',
+                  }}
+                >
+                  <td style={{
+                    padding: '12px 16px',
+                    color: isDarkMode ? '#ffffff' : '#323338',
+                    fontWeight: 500,
+                  }}>
+                    <Flex align="Center" gap={Flex.gaps.SMALL}>
+                      {item.name}
+                      {highlight && (
+                        <Tooltip content={`Rule: ${highlight.ruleName}`}>
+                          <span style={{
+                            fontSize: 10,
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            backgroundColor: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.1)',
+                          }}>
+                            {highlight.ruleName}
+                          </span>
+                        </Tooltip>
+                      )}
+                    </Flex>
+                  </td>
+                  {displayColumns.map(col => {
+                    const colValue = item.column_values.find(cv => cv.id === col.id);
+                    return (
+                      <td
+                        key={col.id}
+                        style={{
+                          padding: '12px 16px',
+                          color: isDarkMode ? '#c5c7d0' : '#676879',
+                        }}
+                      >
+                        {renderColumnValue(colValue, col.type, isDarkMode)}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </Box>
+  );
+}
+
+function renderColumnValue(colValue, columnType, isDarkMode) {
+  if (!colValue || !colValue.text) {
+    return <span style={{ opacity: 0.5 }}>-</span>;
+  }
+
+  const text = colValue.text;
+
+  // Special rendering for status columns
+  if (columnType === 'status' || columnType === 'color') {
+    let bgColor = '#c4c4c4';
+    try {
+      const parsed = JSON.parse(colValue.value);
+      if (parsed?.index !== undefined) {
+        // Status colors from Monday.com palette
+        const statusColors = [
+          '#c4c4c4', '#fdab3d', '#00c875', '#e2445c', '#0086c0',
+          '#a25ddc', '#037f4c', '#579bfc', '#caa35e', '#9cd326'
+        ];
+        bgColor = statusColors[parsed.index % statusColors.length] || '#c4c4c4';
+      }
+    } catch (e) {}
+
+    return (
+      <span style={{
+        display: 'inline-block',
+        padding: '4px 12px',
+        borderRadius: 12,
+        backgroundColor: bgColor,
+        color: '#ffffff',
+        fontSize: 13,
+        fontWeight: 500,
+      }}>
+        {text}
+      </span>
+    );
+  }
+
+  // Special rendering for checkbox
+  if (columnType === 'checkbox') {
+    let isChecked = false;
+    try {
+      const parsed = JSON.parse(colValue.value);
+      isChecked = parsed?.checked === true;
+    } catch (e) {}
+
+    return (
+      <span style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 20,
+        height: 20,
+        borderRadius: 4,
+        backgroundColor: isChecked ? '#00c875' : (isDarkMode ? '#3d4066' : '#e6e9ef'),
+        color: '#ffffff',
+      }}>
+        {isChecked ? '✓' : ''}
+      </span>
+    );
+  }
+
+  // Default text rendering
+  return text;
+}
+
+export default ItemsTable;
