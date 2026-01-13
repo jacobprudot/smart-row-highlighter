@@ -83,14 +83,34 @@ function ItemsTable({ items, columns, rules, isDarkMode }) {
                     <Flex align="Center" gap={Flex.gaps.SMALL}>
                       {item.name}
                       {highlight && (
-                        <Tooltip content={`Rule: ${highlight.ruleName}`}>
+                        <Tooltip
+                          content={
+                            highlight.totalMatches > 1
+                              ? `Rules: ${highlight.allMatchingRules.map(r => r.name).join(', ')}`
+                              : `Rule: ${highlight.ruleName}`
+                          }
+                        >
                           <span style={{
                             fontSize: 10,
                             padding: '2px 6px',
                             borderRadius: 4,
                             backgroundColor: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.1)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
                           }}>
                             {highlight.ruleName}
+                            {highlight.totalMatches > 1 && (
+                              <span style={{
+                                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+                                padding: '1px 4px',
+                                borderRadius: 3,
+                                fontSize: 9,
+                                fontWeight: 600,
+                              }}>
+                                +{highlight.totalMatches - 1}
+                              </span>
+                            )}
                           </span>
                         </Tooltip>
                       )}

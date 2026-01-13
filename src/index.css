@@ -122,3 +122,9 @@ body {
   margin-bottom: 8px;
   color: var(--primary-text-color, #323338);
 }
+
+/* Hide Toggle text (On/Off) */
+.toggle-text,
+.monday-style-toggle_text {
+  display: none !important;
+}

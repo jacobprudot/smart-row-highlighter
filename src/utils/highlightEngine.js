@@ -166,21 +166,33 @@ export function evaluateRule(rule, item, columns) {
   }
 }
 
-// Get highlight color for an item based on rules (first match wins)
-export function getItemHighlight(item, rules, columns, isDarkMode = false) {
+// Get all matching rules for an item
+export function getAllMatchingRules(item, rules, columns) {
+  const matchingRules = [];
   for (const rule of rules) {
     if (!rule.enabled) continue;
-
     if (evaluateRule(rule, item, columns)) {
-      const color = HIGHLIGHT_COLORS.find(c => c.id === rule.colorId);
-      return {
-        ruleId: rule.id,
-        ruleName: rule.name,
-        color: isDarkMode ? color?.dark : color?.value,
-        colorId: rule.colorId,
-      };
+      matchingRules.push(rule);
     }
   }
+  return matchingRules;
+}
 
-  return null;
+// Get highlight color for an item based on rules (first match wins)
+export function getItemHighlight(item, rules, columns, isDarkMode = false) {
+  const matchingRules = getAllMatchingRules(item, rules, columns);
+
+  if (matchingRules.length === 0) return null;
+
+  const firstRule = matchingRules[0];
+  const color = HIGHLIGHT_COLORS.find(c => c.id === firstRule.colorId);
+
+  return {
+    ruleId: firstRule.id,
+    ruleName: firstRule.name,
+    color: isDarkMode ? color?.dark : color?.value,
+    colorId: firstRule.colorId,
+    totalMatches: matchingRules.length,
+    allMatchingRules: matchingRules,
+  };
 }
