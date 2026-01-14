@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Use - Smart Row Highlighter</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            color: #333;
+            background-color: #f9fafb;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #0073ea;
+        }
+        .header h1 {
+            color: #0073ea;
+            margin: 0 0 10px 0;
+            font-size: 32px;
+        }
+        .header p {
+            color: #666;
+            font-size: 18px;
+            margin: 0;
+        }
+        .section {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        h2 {
+            color: #323338;
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h2 .step-number {
+            background: #0073ea;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        h3 {
+            color: #323338;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+        p {
+            margin: 0 0 16px 0;
+        }
+        ul, ol {
+            padding-left: 24px;
+            margin: 0 0 16px 0;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .screenshot {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #e6e9ef;
+            margin: 16px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .tip {
+            background: #e8f4fd;
+            border-left: 4px solid #0073ea;
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+        .tip-title {
+            font-weight: 600;
+            color: #0073ea;
+            margin-bottom: 8px;
+        }
+        .warning {
+            background: #fff8e6;
+            border-left: 4px solid #fdab3d;
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+        .warning-title {
+            font-weight: 600;
+            color: #fdab3d;
+            margin-bottom: 8px;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .feature-item {
+            background: #f6f7fb;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .feature-item .icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .feature-item .label {
+            font-weight: 500;
+            color: #323338;
+        }
+        .operator-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .operator-table th,
+        .operator-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e6e9ef;
+        }
+        .operator-table th {
+            background: #f6f7fb;
+            font-weight: 600;
+            color: #323338;
+        }
+        .operator-table tr:hover {
+            background: #f9fafb;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+        }
+        .color-preview {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            vertical-align: middle;
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #e6e9ef;
+            color: #666;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #0073ea;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Smart Row Highlighter</h1>
+        <p>Automatically highlight rows based on column values with powerful conditional rules</p>
+    </div>
+
+    <!-- Getting Started -->
+    <div class="section">
+        <h2><span class="step-number">1</span> Getting Started</h2>
+        <p>Smart Row Highlighter is a Board View that lets you create visual highlighting rules for your monday.com boards. After installation, add it to any board:</p>
+        <ol>
+            <li>Open your board</li>
+            <li>Click the <strong>+ Add View</strong> button</li>
+            <li>Search for <strong>"Smart Row Highlighter"</strong></li>
+            <li>Click to add it to your board</li>
+        </ol>
+        <img src="https://raw.githubusercontent.com/jacobprudot/smart-row-highlighter/main/public/SRH001.png" alt="Smart Row Highlighter initial view" class="screenshot">
+        <p>You'll see your board items in a preview table and an empty rules panel. Let's create your first rule!</p>
+    </div>
+
+    <!-- Creating Rules -->
+    <div class="section">
+        <h2><span class="step-number">2</span> Creating Your First Rule</h2>
+        <p>Click the <strong>"+ Add Rule"</strong> button to open the rule editor:</p>
+        <img src="https://raw.githubusercontent.com/jacobprudot/smart-row-highlighter/main/public/SRH003.png" alt="Create highlighting rule dialog" class="screenshot">
+        <ol>
+            <li><strong>Rule Name:</strong> Give your rule a descriptive name (e.g., "Overdue Tasks")</li>
+            <li><strong>Column:</strong> Select which column to evaluate</li>
+            <li><strong>Operator:</strong> Choose a condition (equals, contains, is overdue, etc.)</li>
+            <li><strong>Value:</strong> Enter the value to match (if required)</li>
+            <li><strong>Highlight Color:</strong> Pick a color for matching rows</li>
+            <li>Click <strong>"Create Rule"</strong> to save</li>
+        </ol>
+        <div class="tip">
+            <div class="tip-title">Pro Tip</div>
+            Operators like "is overdue", "is today", and "is empty" don't require a value - they evaluate automatically based on the current date or column state.
+        </div>
+    </div>
+
+    <!-- Supported Column Types -->
+    <div class="section">
+        <h2><span class="step-number">3</span> Supported Columns & Operators</h2>
+        <p>Smart Row Highlighter supports all major monday.com column types:</p>
+
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="icon">🚦</div>
+                <div class="label">Status</div>
+            </div>
+            <div class="feature-item">
+                <div class="icon">📝</div>
+                <div class="label">Text</div>
+            </div>
+            <div class="feature-item">
+                <div class="icon">🔢</div>
+                <div class="label">Numbers</div>
+            </div>
+            <div class="feature-item">
+                <div class="icon">📅</div>
+                <div class="label">Date</div>
+            </div>
+            <div class="feature-item">
+                <div class="icon">☑️</div>
+                <div class="label">Checkbox</div>
+            </div>
+            <div class="feature-item">
+                <div class="icon">👥</div>
+                <div class="label">People</div>
+            </div>
+        </div>
+
+        <h3>Available Operators</h3>
+        <table class="operator-table">
+            <thead>
+                <tr>
+                    <th>Column Type</th>
+                    <th>Operators</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Status</strong></td>
+                    <td>equals, not equals, is empty, is not empty</td>
+                </tr>
+                <tr>
+                    <td><strong>Text</strong></td>
+                    <td>equals, not equals, contains, not contains, starts with, ends with, regex, is empty</td>
+                </tr>
+                <tr>
+                    <td><strong>Number</strong></td>
+                    <td>equals, not equals, greater than, less than, between, is empty</td>
+                </tr>
+                <tr>
+                    <td><strong>Date</strong></td>
+                    <td>equals, before, after, is overdue, is today, is this week, is empty</td>
+                </tr>
+                <tr>
+                    <td><strong>Checkbox</strong></td>
+                    <td>is checked, is not checked</td>
+                </tr>
+                <tr>
+                    <td><strong>People</strong></td>
+                    <td>equals, contains, is empty</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Multiple Conditions -->
+    <div class="section">
+        <h2><span class="step-number">4</span> Multiple Conditions (AND/OR)</h2>
+        <p>Create powerful rules by combining multiple conditions:</p>
+        <ol>
+            <li>Click <strong>"+ Add Condition"</strong> in the rule editor</li>
+            <li>Configure each condition independently</li>
+            <li>Choose <strong>AND</strong> (all must match) or <strong>OR</strong> (any must match)</li>
+        </ol>
+        <img src="https://raw.githubusercontent.com/jacobprudot/smart-row-highlighter/main/public/SRH002.png" alt="Multiple conditions with AND/OR logic" class="screenshot">
+        <h3>Examples:</h3>
+        <ul>
+            <li><strong>AND:</strong> Status = "In Progress" AND Due Date is overdue → Highlight urgent tasks</li>
+            <li><strong>OR:</strong> Priority = "High" OR Priority = "Critical" → Highlight all high-priority items</li>
+        </ul>
+    </div>
+
+    <!-- Managing Rules -->
+    <div class="section">
+        <h2><span class="step-number">5</span> Managing Your Rules</h2>
+        <img src="https://raw.githubusercontent.com/jacobprudot/smart-row-highlighter/main/public/SRH005.png" alt="Rules list with highlighting applied" class="screenshot">
+
+        <h3>Rule Priority (Drag & Drop)</h3>
+        <p>When multiple rules could match the same row, the <strong>first matching rule wins</strong>. Drag rules to reorder them and set priorities.</p>
+
+        <h3>Available Actions</h3>
+        <ul>
+            <li><strong>Toggle On/Off:</strong> Temporarily disable a rule without deleting it</li>
+            <li><strong>Edit:</strong> Click the settings icon to modify a rule</li>
+            <li><strong>Duplicate:</strong> Create a copy of an existing rule</li>
+            <li><strong>Delete:</strong> Remove a rule permanently</li>
+        </ul>
+
+        <h3>Search Rules</h3>
+        <p>When you have more than 3 rules, a search box appears to quickly find rules by name.</p>
+    </div>
+
+    <!-- Export/Import -->
+    <div class="section">
+        <h2><span class="step-number">6</span> Export & Import Rules</h2>
+        <p>Share your highlighting configuration across boards or with team members:</p>
+
+        <h3>Export</h3>
+        <ol>
+            <li>Click the <strong>Export</strong> button</li>
+            <li>A JSON file will download with all your rules</li>
+        </ol>
+
+        <h3>Import</h3>
+        <ol>
+            <li>Click the <strong>Import</strong> button</li>
+            <li>Paste the JSON content from an exported file</li>
+            <li>Click <strong>"Import Rules"</strong> to add them</li>
+        </ol>
+
+        <div class="warning">
+            <div class="warning-title">Note</div>
+            Imported rules are added to your existing rules. Make sure column names match between boards for rules to work correctly.
+        </div>
+    </div>
+
+    <!-- Highlight Colors -->
+    <div class="section">
+        <h2><span class="step-number">7</span> Available Highlight Colors</h2>
+        <p>Choose from 8 carefully selected colors that work well in both light and dark modes:</p>
+        <ul>
+            <li><span class="color-preview" style="background: #FFCDD2;"></span><strong>Red</strong> - Urgent, overdue, critical</li>
+            <li><span class="color-preview" style="background: #F8BBD9;"></span><strong>Pink</strong> - Special attention</li>
+            <li><span class="color-preview" style="background: #E1BEE7;"></span><strong>Purple</strong> - VIP, premium</li>
+            <li><span class="color-preview" style="background: #C5CAE9;"></span><strong>Indigo</strong> - In review</li>
+            <li><span class="color-preview" style="background: #BBDEFB;"></span><strong>Blue</strong> - In progress</li>
+            <li><span class="color-preview" style="background: #C8E6C9;"></span><strong>Green</strong> - Completed, approved</li>
+            <li><span class="color-preview" style="background: #FFF9C4;"></span><strong>Yellow</strong> - Warning, pending</li>
+            <li><span class="color-preview" style="background: #FFE0B2;"></span><strong>Orange</strong> - Medium priority</li>
+        </ul>
+    </div>
+
+    <!-- Board Preview -->
+    <div class="section">
+        <h2><span class="step-number">8</span> Board Preview</h2>
+        <img src="https://raw.githubusercontent.com/jacobprudot/smart-row-highlighter/main/public/SRH004.png" alt="Board preview with highlighted rows" class="screenshot">
+        <p>The Board Preview shows how your rules affect your items in real-time:</p>
+        <ul>
+            <li>See highlighted rows as you create and modify rules</li>
+            <li>Hover over an item name to see which rule(s) matched</li>
+            <li>Multiple matching rules show a badge with the count</li>
+            <li>Pagination available for boards with many items (20 per page)</li>
+        </ul>
+    </div>
+
+    <!-- Free vs Pro -->
+    <div class="section">
+        <h2><span class="step-number">9</span> Free vs Pro</h2>
+        <p>Smart Row Highlighter offers a generous free tier:</p>
+        <table class="operator-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Free</th>
+                    <th>Pro</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Rules per board</td>
+                    <td>5 rules</td>
+                    <td>Unlimited</td>
+                </tr>
+                <tr>
+                    <td>Multiple conditions</td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                </tr>
+                <tr>
+                    <td>All operators</td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                </tr>
+                <tr>
+                    <td>Export/Import</td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                </tr>
+                <tr>
+                    <td>Dark mode</td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="tip">
+            <div class="tip-title">Tip</div>
+            With multiple conditions per rule, 5 rules can cover most use cases! Each rule with AND/OR logic is like having multiple simple rules combined.
+        </div>
+    </div>
+
+    <!-- Support -->
+    <div class="section">
+        <h2>Need Help?</h2>
+        <p>If you have questions or need assistance, please contact us:</p>
+        <p><strong>Email:</strong> <a href="mailto:leongaelllc@gmail.com">leongaelllc@gmail.com</a></p>
+        <p>We typically respond within 24-48 business hours.</p>
+    </div>
+
+    <div class="footer">
+        <p>Smart Row Highlighter is developed by <strong>Leon Gael LLC</strong></p>
+        <p>
+            <a href="privacy-policy.html">Privacy Policy</a> |
+            <a href="terms-of-service.html">Terms of Service</a>
+        </p>
+    </div>
+</body>
+</html>
