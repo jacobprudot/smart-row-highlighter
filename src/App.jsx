@@ -19,7 +19,7 @@ import Onboarding from './components/Onboarding';
 import logoImg from '/logo.png';
 
 const ONBOARDING_KEY = 'smart-row-highlighter-onboarding-seen';
-const FREE_RULE_LIMIT = 10;
+const FREE_RULE_LIMIT = 5;
 const IS_PRO = false; // TODO: Integrate with Monday.com subscription API
 
 function App() {
