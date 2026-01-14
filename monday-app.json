@@ -1,0 +1,26 @@
+{
+  "name": "Smart Row Highlighter",
+  "slug": "smart-row-highlighter",
+  "description": "Automatically highlight rows based on column values with powerful conditional rules",
+  "version": "1.0.0",
+  "features": [
+    {
+      "type": "BoardView",
+      "name": "Smart Row Highlighter",
+      "description": "Create highlighting rules to visually distinguish rows based on status, dates, and more",
+      "slug": "smart-row-highlighter-view",
+      "icon": "logo.png",
+      "settings": {}
+    }
+  ],
+  "oauth": {
+    "scopes": [
+      "boards:read",
+      "storage:read",
+      "storage:write"
+    ]
+  },
+  "build": {
+    "outputDir": "dist"
+  }
+}

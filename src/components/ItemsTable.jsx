@@ -1,10 +1,43 @@
-import React from 'react';
-import { Flex, Box, Heading, Tooltip } from 'monday-ui-react-core';
+import React, { useState, useMemo, useCallback } from 'react';
+import { Flex, Box, Heading, Tooltip, Button, IconButton } from 'monday-ui-react-core';
+import { NavigationChevronLeft, NavigationChevronRight } from 'monday-ui-react-core/icons';
 import { getItemHighlight } from '../utils/highlightEngine';
 
+const ITEMS_PER_PAGE = 20;
+
+// Memoize highlight calculations for performance
+function useHighlightCache(items, rules, columns, isDarkMode) {
+  return useMemo(() => {
+    const cache = new Map();
+    items.forEach(item => {
+      cache.set(item.id, getItemHighlight(item, rules, columns, isDarkMode));
+    });
+    return cache;
+  }, [items, rules, columns, isDarkMode]);
+}
+
 function ItemsTable({ items, columns, rules, isDarkMode }) {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Memoized highlight cache for performance
+  const highlightCache = useHighlightCache(items, rules, columns, isDarkMode);
+
   // Get columns to display (limit to first 5 for readability)
   const displayColumns = columns.slice(0, 5);
+
+  // Pagination
+  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return items.slice(start, start + ITEMS_PER_PAGE);
+  }, [items, currentPage]);
+
+  // Reset to page 1 when items change
+  useMemo(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [items.length]);
 
   if (items.length === 0) {
     return (
@@ -21,10 +54,43 @@ function ItemsTable({ items, columns, rules, isDarkMode }) {
 
   return (
     <Box>
-      <Heading type={Heading.types.H3} value="Board Preview" />
-      <p style={{ color: isDarkMode ? '#c5c7d0' : '#676879', fontSize: 14, marginBottom: 12 }}>
-        Preview how your highlighting rules will look. Showing {items.length} items.
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div>
+          <Heading type={Heading.types.H3} value="Board Preview" />
+          <p style={{ color: isDarkMode ? '#c5c7d0' : '#676879', fontSize: 14, margin: 0 }}>
+            Showing {paginatedItems.length} of {items.length} items
+            {totalPages > 1 && ` (page ${currentPage} of ${totalPages})`}
+          </p>
+        </div>
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <IconButton
+              icon={NavigationChevronLeft}
+              size={IconButton.sizes.SMALL}
+              kind={IconButton.kinds.TERTIARY}
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              ariaLabel="Previous page"
+            />
+            <span style={{
+              fontSize: 13,
+              color: isDarkMode ? '#c5c7d0' : '#676879',
+              minWidth: 60,
+              textAlign: 'center',
+            }}>
+              {currentPage} / {totalPages}
+            </span>
+            <IconButton
+              icon={NavigationChevronRight}
+              size={IconButton.sizes.SMALL}
+              kind={IconButton.kinds.TERTIARY}
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              ariaLabel="Next page"
+            />
+          </div>
+        )}
+      </div>
 
       <div className="items-table-container" style={{ overflowX: 'auto' }}>
         <table className="items-table" style={{
@@ -63,8 +129,8 @@ function ItemsTable({ items, columns, rules, isDarkMode }) {
             </tr>
           </thead>
           <tbody>
-            {items.map(item => {
-              const highlight = getItemHighlight(item, rules, columns, isDarkMode);
+            {paginatedItems.map(item => {
+              const highlight = highlightCache.get(item.id);
 
               return (
                 <tr

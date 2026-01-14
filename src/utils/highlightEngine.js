@@ -17,6 +17,9 @@ export const OPERATORS = {
     { id: 'not_equals', label: 'does not equal' },
     { id: 'contains', label: 'contains' },
     { id: 'not_contains', label: 'does not contain' },
+    { id: 'starts_with', label: 'starts with' },
+    { id: 'ends_with', label: 'ends with' },
+    { id: 'regex', label: 'matches regex' },
     { id: 'is_empty', label: 'is empty' },
     { id: 'is_not_empty', label: 'is not empty' },
   ],
@@ -72,8 +75,128 @@ export function getOperatorsForType(columnType) {
   return OPERATORS[mappedType] || OPERATORS.text;
 }
 
-// Evaluate a single rule against an item
+// Evaluate a single condition against an item
+function evaluateCondition(condition, item, columns) {
+  const column = columns.find(c => c.id === condition.columnId);
+  if (!column) return false;
+
+  const columnValue = item.column_values.find(cv => cv.id === condition.columnId);
+  if (!columnValue && condition.operator !== 'is_empty') return false;
+
+  const textValue = columnValue?.text || '';
+  const rawValue = columnValue?.value;
+
+  switch (condition.operator) {
+    case 'equals':
+      return textValue.toLowerCase() === condition.value.toLowerCase();
+
+    case 'not_equals':
+      return textValue.toLowerCase() !== condition.value.toLowerCase();
+
+    case 'contains':
+      return textValue.toLowerCase().includes(condition.value.toLowerCase());
+
+    case 'not_contains':
+      return !textValue.toLowerCase().includes(condition.value.toLowerCase());
+
+    case 'starts_with':
+      return textValue.toLowerCase().startsWith(condition.value.toLowerCase());
+
+    case 'ends_with':
+      return textValue.toLowerCase().endsWith(condition.value.toLowerCase());
+
+    case 'regex':
+      try {
+        const regex = new RegExp(condition.value, 'i');
+        return regex.test(textValue);
+      } catch (e) {
+        return false;
+      }
+
+    case 'is_empty':
+      return !textValue || textValue.trim() === '';
+
+    case 'is_not_empty':
+      return textValue && textValue.trim() !== '';
+
+    case 'greater_than':
+      return parseFloat(textValue) > parseFloat(condition.value);
+
+    case 'less_than':
+      return parseFloat(textValue) < parseFloat(condition.value);
+
+    case 'greater_or_equal':
+      return parseFloat(textValue) >= parseFloat(condition.value);
+
+    case 'less_or_equal':
+      return parseFloat(textValue) <= parseFloat(condition.value);
+
+    case 'is_checked':
+      return rawValue && JSON.parse(rawValue)?.checked === true;
+
+    case 'is_not_checked':
+      return !rawValue || JSON.parse(rawValue)?.checked !== true;
+
+    case 'is_overdue': {
+      if (!rawValue) return false;
+      const dateValue = JSON.parse(rawValue)?.date;
+      if (!dateValue) return false;
+      return new Date(dateValue) < new Date().setHours(0, 0, 0, 0);
+    }
+
+    case 'is_today': {
+      if (!rawValue) return false;
+      const dateValue = JSON.parse(rawValue)?.date;
+      if (!dateValue) return false;
+      const today = new Date().toISOString().split('T')[0];
+      return dateValue === today;
+    }
+
+    case 'is_this_week': {
+      if (!rawValue) return false;
+      const dateValue = JSON.parse(rawValue)?.date;
+      if (!dateValue) return false;
+      const date = new Date(dateValue);
+      const now = new Date();
+      const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      return date >= weekStart && date <= weekEnd;
+    }
+
+    case 'before': {
+      if (!rawValue) return false;
+      const dateValue = JSON.parse(rawValue)?.date;
+      if (!dateValue) return false;
+      return new Date(dateValue) < new Date(condition.value);
+    }
+
+    case 'after': {
+      if (!rawValue) return false;
+      const dateValue = JSON.parse(rawValue)?.date;
+      if (!dateValue) return false;
+      return new Date(dateValue) > new Date(condition.value);
+    }
+
+    default:
+      return false;
+  }
+}
+
+// Evaluate a single rule against an item (supports multiple conditions)
 export function evaluateRule(rule, item, columns) {
+  // Support for multiple conditions (AND/OR logic)
+  if (rule.conditions && rule.conditions.length > 0) {
+    const logic = rule.conditionLogic || 'AND';
+
+    if (logic === 'AND') {
+      return rule.conditions.every(condition => evaluateCondition(condition, item, columns));
+    } else {
+      return rule.conditions.some(condition => evaluateCondition(condition, item, columns));
+    }
+  }
+
+  // Legacy single-condition support (backward compatible)
   const column = columns.find(c => c.id === rule.columnId);
   if (!column) return false;
 
@@ -95,6 +218,20 @@ export function evaluateRule(rule, item, columns) {
 
     case 'not_contains':
       return !textValue.toLowerCase().includes(rule.value.toLowerCase());
+
+    case 'starts_with':
+      return textValue.toLowerCase().startsWith(rule.value.toLowerCase());
+
+    case 'ends_with':
+      return textValue.toLowerCase().endsWith(rule.value.toLowerCase());
+
+    case 'regex':
+      try {
+        const regex = new RegExp(rule.value, 'i');
+        return regex.test(textValue);
+      } catch (e) {
+        return false;
+      }
 
     case 'is_empty':
       return !textValue || textValue.trim() === '';

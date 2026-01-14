@@ -12,10 +12,15 @@ import {
   Toggle,
   Tooltip
 } from 'monday-ui-react-core';
-import { Add, Delete, Settings, Drag } from 'monday-ui-react-core/icons';
+import { Add, Delete, Settings, Drag, Duplicate, Search, CloseSmall, Download, Upload } from 'monday-ui-react-core/icons';
 import RuleEditor from './components/RuleEditor';
 import ItemsTable from './components/ItemsTable';
+import Onboarding from './components/Onboarding';
 import logoImg from '/logo.png';
+
+const ONBOARDING_KEY = 'smart-row-highlighter-onboarding-seen';
+const FREE_RULE_LIMIT = 10;
+const IS_PRO = false; // TODO: Integrate with Monday.com subscription API
 
 function App() {
   const { monday, context, loading: sdkLoading } = useMonday();
@@ -61,6 +66,12 @@ function App() {
   const [showRuleEditor, setShowRuleEditor] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [ruleSearchQuery, setRuleSearchQuery] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importData, setImportData] = useState('');
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    return !localStorage.getItem(ONBOARDING_KEY);
+  });
 
   // Drag and drop state
   const [draggedRuleId, setDraggedRuleId] = useState(null);
@@ -129,6 +140,23 @@ function App() {
     setEditingRule(null);
   };
 
+  // Duplicate rule
+  const handleDuplicateRule = (rule) => {
+    const duplicatedRule = {
+      ...rule,
+      id: Date.now().toString(),
+      name: `${rule.name} (copy)`,
+    };
+    const newRules = [...rules, duplicatedRule];
+    handleRulesChange(newRules);
+
+    monday.execute('notice', {
+      message: `Rule "${rule.name}" duplicated`,
+      type: 'success',
+      timeout: 3000,
+    });
+  };
+
   // Delete rule with confirmation
   const handleDeleteRule = (ruleId) => {
     setDeleteConfirm(ruleId);
@@ -136,9 +164,17 @@ function App() {
 
   const confirmDelete = () => {
     if (deleteConfirm) {
+      const deletedRule = rules.find(r => r.id === deleteConfirm);
       const newRules = rules.filter(r => r.id !== deleteConfirm);
       handleRulesChange(newRules);
       setDeleteConfirm(null);
+
+      // Show toast notification
+      monday.execute('notice', {
+        message: `Rule "${deletedRule?.name || 'Unnamed'}" deleted`,
+        type: 'success',
+        timeout: 3000,
+      });
     }
   };
 
@@ -186,6 +222,78 @@ function App() {
   const handleDragEnd = () => {
     setDraggedRuleId(null);
     setDragOverRuleId(null);
+  };
+
+  // Export rules to JSON file
+  const handleExportRules = () => {
+    const exportData = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      rules: rules.map(r => ({
+        name: r.name,
+        colorId: r.colorId,
+        enabled: r.enabled,
+        conditions: r.conditions || [{ columnId: r.columnId, operator: r.operator, value: r.value }],
+        conditionLogic: r.conditionLogic || 'AND',
+      })),
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `highlight-rules-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    monday.execute('notice', {
+      message: `${rules.length} rules exported successfully`,
+      type: 'success',
+      timeout: 3000,
+    });
+  };
+
+  // Import rules from JSON
+  const handleImportRules = () => {
+    try {
+      const data = JSON.parse(importData);
+
+      if (!data.rules || !Array.isArray(data.rules)) {
+        throw new Error('Invalid format');
+      }
+
+      const importedRules = data.rules.map(r => ({
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        name: r.name,
+        colorId: r.colorId || 'yellow',
+        enabled: r.enabled ?? true,
+        conditions: r.conditions || [],
+        conditionLogic: r.conditionLogic || 'AND',
+        // Legacy fields
+        columnId: r.conditions?.[0]?.columnId || '',
+        operator: r.conditions?.[0]?.operator || '',
+        value: r.conditions?.[0]?.value || '',
+      }));
+
+      const newRules = [...rules, ...importedRules];
+      handleRulesChange(newRules);
+      setShowImportModal(false);
+      setImportData('');
+
+      monday.execute('notice', {
+        message: `${importedRules.length} rules imported successfully`,
+        type: 'success',
+        timeout: 3000,
+      });
+    } catch (e) {
+      monday.execute('notice', {
+        message: 'Invalid JSON format. Please check your data.',
+        type: 'error',
+        timeout: 5000,
+      });
+    }
   };
 
   // Loading state
@@ -256,10 +364,83 @@ function App() {
             </p>
           </div>
         </div>
-        <Button leftIcon={Add} onClick={handleAddRule} size={Button.sizes.SMALL}>
-          Add Rule
-        </Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {rules.length > 0 && (
+            <>
+              <Tooltip content="Export rules">
+                <IconButton
+                  icon={Download}
+                  size={IconButton.sizes.SMALL}
+                  kind={IconButton.kinds.TERTIARY}
+                  onClick={handleExportRules}
+                  ariaLabel="Export rules"
+                />
+              </Tooltip>
+              <Tooltip content="Import rules">
+                <IconButton
+                  icon={Upload}
+                  size={IconButton.sizes.SMALL}
+                  kind={IconButton.kinds.TERTIARY}
+                  onClick={() => setShowImportModal(true)}
+                  ariaLabel="Import rules"
+                />
+              </Tooltip>
+            </>
+          )}
+          <Tooltip
+            content={!IS_PRO && rules.length >= FREE_RULE_LIMIT ? `Free plan limit: ${FREE_RULE_LIMIT} rules. Upgrade to Pro for unlimited rules.` : ''}
+          >
+            <Button
+              leftIcon={Add}
+              onClick={handleAddRule}
+              size={Button.sizes.SMALL}
+              disabled={!IS_PRO && rules.length >= FREE_RULE_LIMIT}
+            >
+              Add Rule {!IS_PRO && `(${rules.length}/${FREE_RULE_LIMIT})`}
+            </Button>
+          </Tooltip>
+        </div>
       </div>
+
+      {/* Upgrade Banner */}
+      {!IS_PRO && rules.length >= FREE_RULE_LIMIT - 1 && (
+        <div style={{
+          backgroundColor: isDarkMode ? '#2a3a5c' : '#e7f3ff',
+          borderRadius: 8,
+          padding: '12px 16px',
+          marginBottom: 16,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          border: `1px solid ${isDarkMode ? '#3d5a80' : '#b3d7ff'}`,
+        }}>
+          <div>
+            <span style={{
+              fontWeight: 600,
+              color: isDarkMode ? '#ffffff' : '#323338',
+              fontSize: 14,
+            }}>
+              {rules.length >= FREE_RULE_LIMIT ? 'Rule limit reached!' : 'Almost at your limit!'}
+            </span>
+            <span style={{
+              color: isDarkMode ? '#c5c7d0' : '#676879',
+              fontSize: 13,
+              marginLeft: 8,
+            }}>
+              Upgrade to Pro for unlimited rules, priority support, and more.
+            </span>
+          </div>
+          <Button
+            size={Button.sizes.SMALL}
+            onClick={() => {
+              monday.execute('openPlanSelection');
+            }}
+          >
+            Upgrade
+          </Button>
+        </div>
+      )}
 
       {/* Rules Section - Compact Grid */}
       {rules.length > 0 && (
@@ -268,22 +449,62 @@ function App() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: 8
+            marginBottom: 8,
+            flexWrap: 'wrap',
+            gap: 8
           }}>
-            <h3 style={{
-              margin: 0,
-              fontSize: 14,
-              fontWeight: 600,
-              color: isDarkMode ? '#ffffff' : '#323338'
-            }}>
-              Rules ({rules.length})
-            </h3>
-            <span style={{
-              fontSize: 12,
-              color: isDarkMode ? '#c5c7d0' : '#676879'
-            }}>
-              First match wins
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <h3 style={{
+                margin: 0,
+                fontSize: 14,
+                fontWeight: 600,
+                color: isDarkMode ? '#ffffff' : '#323338'
+              }}>
+                Rules ({rules.length})
+              </h3>
+              <span style={{
+                fontSize: 12,
+                color: isDarkMode ? '#c5c7d0' : '#676879'
+              }}>
+                First match wins
+              </span>
+            </div>
+            {/* Search Rules */}
+            {rules.length > 3 && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                backgroundColor: isDarkMode ? '#30324e' : '#f6f7fb',
+                borderRadius: 6,
+                padding: '4px 8px',
+              }}>
+                <Search size={14} style={{ color: isDarkMode ? '#c5c7d0' : '#676879' }} />
+                <input
+                  type="text"
+                  placeholder="Search rules..."
+                  value={ruleSearchQuery}
+                  onChange={(e) => setRuleSearchQuery(e.target.value)}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    outline: 'none',
+                    fontSize: 12,
+                    color: isDarkMode ? '#ffffff' : '#323338',
+                    width: 120,
+                  }}
+                />
+                {ruleSearchQuery && (
+                  <IconButton
+                    icon={CloseSmall}
+                    size={IconButton.sizes.XXS}
+                    kind={IconButton.kinds.TERTIARY}
+                    onClick={() => setRuleSearchQuery('')}
+                    ariaLabel="Clear search"
+                  />
+                )}
+              </div>
+            )}
           </div>
 
           {/* Rules Grid - 2 columns on larger screens */}
@@ -292,7 +513,18 @@ function App() {
             gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
             gap: 8
           }}>
-            {rules.map((rule, index) => {
+            {rules
+              .filter(rule => {
+                if (!ruleSearchQuery) return true;
+                const searchLower = ruleSearchQuery.toLowerCase();
+                const column = columns.find(c => c.id === rule.columnId);
+                return (
+                  rule.name?.toLowerCase().includes(searchLower) ||
+                  column?.title?.toLowerCase().includes(searchLower) ||
+                  rule.value?.toLowerCase().includes(searchLower)
+                );
+              })
+              .map((rule, index) => {
               const color = HIGHLIGHT_COLORS.find(c => c.id === rule.colorId);
               const column = columns.find(c => c.id === rule.columnId);
               const isDragging = draggedRuleId === rule.id;
@@ -379,6 +611,13 @@ function App() {
                       ariaLabel="Edit rule"
                     />
                     <IconButton
+                      icon={Duplicate}
+                      size={IconButton.sizes.XS}
+                      kind={IconButton.kinds.TERTIARY}
+                      onClick={() => handleDuplicateRule(rule)}
+                      ariaLabel="Duplicate rule"
+                    />
+                    <IconButton
                       icon={Delete}
                       size={IconButton.sizes.XS}
                       kind={IconButton.kinds.TERTIARY}
@@ -439,6 +678,7 @@ function App() {
             setEditingRule(null);
           }}
           isDarkMode={isDarkMode}
+          monday={monday}
         />
       )}
 
@@ -488,6 +728,92 @@ function App() {
                 onClick={confirmDelete}
               >
                 Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding */}
+      {showOnboarding && (
+        <Onboarding
+          isDarkMode={isDarkMode}
+          onComplete={() => {
+            localStorage.setItem(ONBOARDING_KEY, 'true');
+            setShowOnboarding(false);
+          }}
+        />
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: isDarkMode ? '#1c1f3b' : '#ffffff',
+            borderRadius: 8,
+            padding: 24,
+            maxWidth: 500,
+            width: '90%',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{
+              margin: '0 0 12px 0',
+              color: isDarkMode ? '#ffffff' : '#323338'
+            }}>
+              Import Rules
+            </h3>
+            <p style={{
+              margin: '0 0 16px 0',
+              color: isDarkMode ? '#c5c7d0' : '#676879',
+              fontSize: 14
+            }}>
+              Paste JSON data exported from another board. Rules will be added to your existing rules.
+            </p>
+            <textarea
+              value={importData}
+              onChange={(e) => setImportData(e.target.value)}
+              placeholder='{"version": "1.0", "rules": [...]}'
+              style={{
+                width: '100%',
+                height: 150,
+                padding: 12,
+                borderRadius: 6,
+                border: `1px solid ${isDarkMode ? '#4b4e69' : '#c5c7d0'}`,
+                backgroundColor: isDarkMode ? '#30324e' : '#ffffff',
+                color: isDarkMode ? '#ffffff' : '#323338',
+                fontSize: 13,
+                fontFamily: 'monospace',
+                resize: 'vertical',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+              <Button
+                kind={Button.kinds.TERTIARY}
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportData('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleImportRules}
+                disabled={!importData.trim()}
+              >
+                Import
               </Button>
             </div>
           </div>
