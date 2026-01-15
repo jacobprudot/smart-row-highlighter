@@ -130,6 +130,8 @@ function App() {
   // Save rule (new or edited)
   const handleSaveRule = (rule) => {
     let newRules;
+    const isFirstRule = rules.length === 0 && !editingRule;
+
     if (editingRule) {
       newRules = rules.map(r => r.id === editingRule.id ? rule : r);
     } else {
@@ -138,6 +140,11 @@ function App() {
     handleRulesChange(newRules);
     setShowRuleEditor(false);
     setEditingRule(null);
+
+    // Track first value created for monday.com analytics
+    if (isFirstRule) {
+      monday.execute('valueCreatedForUser');
+    }
   };
 
   // Duplicate rule
